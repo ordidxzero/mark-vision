@@ -7,7 +7,7 @@ settings:
 importers:
 
   .:
-    devDependencies:
+    dependencies:
       '@codemirror/lang-markdown':
         specifier: ^6.3.1
         version: 6.3.1
@@ -26,6 +26,7 @@ importers:
       '@lezer/markdown':
         specifier: ^1.3.2
         version: 1.3.2
+    devDependencies:
       esbuild:
         specifier: ^0.24.0
         version: 0.24.0
