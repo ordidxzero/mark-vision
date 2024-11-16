@@ -8,6 +8,7 @@ import {
 import { syntaxTree } from "@codemirror/language";
 import { EditorState, Range } from "@codemirror/state";
 import { SyntaxNodeRef } from "@lezer/common";
+import { isSelectionOverlapNode } from "./utils";
 
 const decorationHide = Decoration.mark({ class: "cm-token" });
 
@@ -96,20 +97,7 @@ class MarkVisionPlugin implements PluginValue {
           !node.type.is("Paragraph") &&
           !node.name.includes("Mark")
         ) {
-          if (cursor.from == cursor.to) {
-            return cursor.from < node.from || cursor.to > node.to;
-          }
-          // [ |    | ]   : cursor.from >= node.from && cursor.to <= node.to
-          // [ |      ] | : cursor.from >= node.from && cursor.from <= node.to && cursor.to >= node.to
-          // | [      ] | : cursor.from <= node.from && cursor.to >= node.to
-          // | [    | ]   : cursor.from <= node.from && cursor.to >= node.from && cursor.to <= node.to
-
-          return (
-            (cursor.from < node.from ||
-              (cursor.to > node.to && cursor.from > node.to)) &&
-            (cursor.from > node.from ||
-              (cursor.to < node.to && cursor.to > node.from))
-          );
+          return !isSelectionOverlapNode(cursor, node);
         }
 
         // * ==== 1. Heading ====
