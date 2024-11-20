@@ -9,10 +9,12 @@
   "exports": {
     "import": "./dist/index.js"
   },
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@codemirror/commands": "^6.7.1",
     "@codemirror/lang-markdown": "^6.3.1",
     "@codemirror/language": "^6.10.3",
     "@codemirror/state": "^6.4.1",
