@@ -14,7 +14,10 @@ const decorationHide = Decoration.mark({ class: "cm-token" });
 
 const heading = (node: SyntaxNodeRef): Range<Decoration> => {
   if (node.name.includes("Heading")) {
-    return Decoration.line({ class: "cm-heading-line" }).range(node.from);
+    const level = node.name.split("Heading")[1];
+    return Decoration.line({
+      class: `cm-heading-${level} cm-heading-line`,
+    }).range(node.from);
   }
 
   if (node.type.is("HeaderMark")) {
@@ -22,7 +25,9 @@ const heading = (node: SyntaxNodeRef): Range<Decoration> => {
       node.matchContext(["SetextHeading1"]) ||
       node.matchContext(["SetextHeading2"])
     ) {
-      return Decoration.line({ class: "cm-heading-line" }).range(node.from);
+      return Decoration.line({
+        class: "cm-heading-line cm-heading-setex-line",
+      }).range(node.from);
     } else {
       return decorationHide.range(node.from, node.to + 1);
     }
@@ -31,8 +36,20 @@ const heading = (node: SyntaxNodeRef): Range<Decoration> => {
   throw Error("Not Implemented");
 };
 
+function camelToSnake(camelCaseStr: string) {
+  return camelCaseStr
+    .replace(/([a-z])([A-Z])/g, "$1-$2") // 소문자와 대문자 사이에 '_' 추가
+    .toLowerCase(); // 결과를 소문자로 변환
+}
+
 const emphasis = (node: SyntaxNodeRef): Range<Decoration> => {
-  return decorationHide.range(node.from, node.to);
+  if (node.name.includes("Mark")) {
+    return decorationHide.range(node.from, node.to);
+  }
+  return Decoration.mark({ class: `cm-${camelToSnake(node.name)}` }).range(
+    node.from,
+    node.to
+  );
 };
 
 const code = (node: SyntaxNodeRef): Range<Decoration> => {
@@ -95,9 +112,10 @@ class MarkVisionPlugin implements PluginValue {
         if (
           !node.type.is("Document") &&
           !node.type.is("Paragraph") &&
-          !node.name.includes("Mark")
+          !node.name.includes("Mark") &&
+          isSelectionOverlapNode(cursor, node)
         ) {
-          return !isSelectionOverlapNode(cursor, node);
+          return false;
         }
 
         // * ==== 1. Heading ====
@@ -109,11 +127,11 @@ class MarkVisionPlugin implements PluginValue {
         // * ==== 2. Emphasis ====
         if (
           [
-            "EmphasisMark",
-            "StrikethroughMark",
-            "HighlightMark",
-            "UnderlineMark",
-          ].includes(node.name)
+            "Emphasis", // *, _, **, __ (StrongEmphasis도 같이 계산)
+            "Strikethrough", // ~~
+            "Highlight", // ==
+            "Underline", // --
+          ].some((name) => node.name.includes(name))
         ) {
           decorations.push(emphasis(node));
         }

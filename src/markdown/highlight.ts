@@ -7,7 +7,12 @@ const HighlightDelim = { resolve: "Highlight", mark: "HighlightMark" };
 const highlightTag = Tag.define();
 
 export const highlightCSS = HighlightStyle.define([
-  { tag: highlightTag, color: "#fc6" },
+  {
+    tag: highlightTag,
+    backgroundColor: "rgba(255, 177, 80, 0.3)",
+    padding: "2px",
+    borderRadius: "2px",
+  },
 ]);
 
 const Highlight: MarkdownConfig = {
