@@ -52,12 +52,18 @@ const emphasis = (node: SyntaxNodeRef): Range<Decoration> => {
   );
 };
 
-const code = (node: SyntaxNodeRef): Range<Decoration> => {
+const code = (node: SyntaxNodeRef): Range<Decoration>[] => {
   if (node.type.is("CodeMark") && node.matchContext(["InlineCode"])) {
-    return decorationHide.range(node.from, node.to);
+    return [decorationHide.range(node.from, node.to)];
   }
 
-  return Decoration.line({ class: "temp" }).range(node.from);
+  if (node.type.is("InlineCode")) {
+    return [
+      Decoration.mark({ class: "cm-inline-code" }).range(node.from, node.to),
+    ];
+  }
+
+  return [Decoration.line({ class: "temp" }).range(node.from)];
 };
 
 const list = (node: SyntaxNodeRef): Range<Decoration> => {
@@ -86,7 +92,7 @@ const quote = (
 };
 
 const horizontalRule = (node: SyntaxNodeRef): Range<Decoration> => {
-  return Decoration.line({ class: "cm-horizontal-rule-line" }).range(node.from);
+  return Decoration.line({ class: "cm-horizontal-rule" }).range(node.from);
 };
 
 class MarkVisionPlugin implements PluginValue {
@@ -140,7 +146,7 @@ class MarkVisionPlugin implements PluginValue {
         // * ==== 3. InlineCode, FencedCode ====
         if (node.name.includes("Code")) {
           // InlineCode, FencedCode, CodeMark, CodeText
-          decorations.push(code(node));
+          decorations.push(...code(node));
         }
         // * ===================================
 
