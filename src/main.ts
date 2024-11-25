@@ -6,11 +6,31 @@ import {
   ViewUpdate,
 } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
-import { EditorState, Range } from "@codemirror/state";
+import { EditorState, Range, SelectionRange } from "@codemirror/state";
 import { SyntaxNodeRef } from "@lezer/common";
 import { isSelectionOverlapNode } from "./utils";
 
 const decorationHide = Decoration.mark({ class: "cm-token" });
+
+const activeLine = (
+  state: EditorState,
+  selection: SelectionRange
+): Range<Decoration>[] => {
+  const startLine = state.doc.lineAt(selection.from);
+  if (selection.from !== selection.to) {
+    const endLine = state.doc.lineAt(selection.to);
+    if (startLine.number != endLine.number) {
+      return Array.from(
+        { length: endLine.number - startLine.number + 1 },
+        (_, i) =>
+          Decoration.line({ class: "cm-active" }).range(
+            state.doc.line(startLine.number + i).from
+          )
+      );
+    }
+  }
+  return [Decoration.line({ class: "cm-active" }).range(startLine.from)];
+};
 
 const heading = (node: SyntaxNodeRef): Range<Decoration> => {
   if (node.name.includes("Heading")) {
@@ -114,6 +134,7 @@ class MarkVisionPlugin implements PluginValue {
 
     syntaxTree(view.state).iterate({
       enter(node) {
+        decorations.push(...activeLine(view.state, cursor));
         // cursor가 node 안에 있거나 node가 selection range에 포함되는 경우, 토큰을 보여준다.
         if (
           !node.type.is("Document") &&
