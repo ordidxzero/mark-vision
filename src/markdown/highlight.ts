@@ -2,7 +2,7 @@ import { MarkdownConfig } from "@lezer/markdown";
 import { styleTags, Tag, tags } from "@lezer/highlight";
 import { HighlightStyle } from "@codemirror/language";
 
-const HighlightDelim = { resolve: "Highlight", mark: "HighlightMark" };
+const HighlightDelim = { resolve: "Highlight", mark: "EmphasisMark" };
 
 const highlightTag = Tag.define();
 
@@ -11,14 +11,14 @@ let Punctuation = /[!"#$%&'()*+,\-.\/:;<=>?@\[\\\]^_`{|}~\xA1\u2010-\u2027]/;
 export const highlightCSS = HighlightStyle.define([
   {
     tag: highlightTag,
-    backgroundColor: "rgba(255, 177, 80, 0.3)",
-    padding: "2px",
-    borderRadius: "2px",
+    // backgroundColor: "rgba(255, 177, 80, 0.3)",
+    // padding: "2px",
+    // borderRadius: "2px",
   },
 ]);
 
 const Highlight: MarkdownConfig = {
-  defineNodes: ["Highlight", "HighlightMark"],
+  defineNodes: ["Highlight"],
   parseInline: [
     {
       name: "Highlight",

@@ -2,7 +2,7 @@ import { MarkdownConfig } from "@lezer/markdown";
 import { styleTags, Tag, tags } from "@lezer/highlight";
 import { HighlightStyle } from "@codemirror/language";
 
-const UnderlineDelim = { resolve: "Underline", mark: "UnderlineMark" };
+const UnderlineDelim = { resolve: "Underline", mark: "EmphasisMark" };
 
 const underlineTag = Tag.define();
 
@@ -11,12 +11,12 @@ let Punctuation = /[!"#$%&'()*+,\-.\/:;<=>?@\[\\\]^_`{|}~\xA1\u2010-\u2027]/;
 export const underlineCSS = HighlightStyle.define([
   {
     tag: underlineTag,
-    textDecoration: "underline",
+    // textDecoration: "underline",
   },
 ]);
 
 const Underline: MarkdownConfig = {
-  defineNodes: ["Underline", "UnderlineMark"],
+  defineNodes: ["Underline"],
   parseInline: [
     {
       name: "Underline",
