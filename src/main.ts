@@ -8,7 +8,7 @@ import {
 import { syntaxTree } from "@codemirror/language";
 import { EditorState, Range, SelectionRange } from "@codemirror/state";
 import { SyntaxNodeRef } from "@lezer/common";
-import { isSelectionOverlapNode } from "./utils";
+import { isSelectionOverlapNode } from "./utils/cursor";
 
 const decorationHide = Decoration.mark({ class: "cm-token" });
 

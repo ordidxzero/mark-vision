@@ -8,7 +8,7 @@ import {
 } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
 import { EditorState, Range, RangeSet, StateField } from "@codemirror/state";
-import { isSelectionBetween, isSelectionOverlapNode } from "../utils";
+import { isSelectionBetween, isSelectionOverlapNode } from "../utils/cursor";
 
 // DOM 요소를 만드는 역할
 class TaskWidget extends WidgetType {
