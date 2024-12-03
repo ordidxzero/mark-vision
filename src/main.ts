@@ -95,15 +95,30 @@ const emphasis = (
   return decorations;
 };
 
-const code = (node: SyntaxNodeRef): Range<Decoration>[] => {
-  if (node.type.is("CodeMark") && node.matchContext(["InlineCode"])) {
-    return [hiddenDecoration.range(node.from, node.to)];
-  }
-
+const code = (
+  cursor: SelectionRange,
+  node: SyntaxNodeRef
+): Range<Decoration>[] => {
+  const decorations: Range<Decoration>[] = [];
+  const name = camelToSnake(node.name);
   if (node.type.is("InlineCode")) {
-    return [
-      Decoration.mark({ class: "cm-inline-code" }).range(node.from, node.to),
-    ];
+    decorations.push(
+      Decoration.mark({ class: `cm-${name}` }).range(node.from + 1, node.to - 1)
+    );
+
+    const markerDeco = isSelectionOverlapNode(cursor, node)
+      ? Decoration.mark({
+          class: `cm-formatting cm-formatting-${name} cm-${name}`,
+        })
+      : hiddenDecoration;
+
+    decorations.push(
+      ...generateDecorationRanges(markerDeco, [
+        [node.from, node.from + 1],
+        [node.to - 1, node.to],
+      ])
+    );
+    return decorations;
   }
 
   return [Decoration.line({ class: "temp" }).range(node.from)];
@@ -180,9 +195,9 @@ class MarkVisionPlugin implements PluginValue {
         // * =====================
 
         // * ==== 3. InlineCode, FencedCode ====
-        if (node.name.includes("Code")) {
-          // InlineCode, FencedCode, CodeMark, CodeText
-          decorations.push(...code(node));
+        if (node.name.includes("Code") && !node.name.includes("Mark")) {
+          // InlineCode, FencedCode, CodeText
+          decorations.push(...code(cursor, node));
         }
         // * ===================================
 

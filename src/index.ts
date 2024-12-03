@@ -55,6 +55,29 @@ export default function (config: any) {
           borderBottomRightRadius: "2px",
           padding: "1px 4px 1px 0",
         },
+
+        // InlineCode Styling
+        ".cm-inline-code": {
+          backgroundColor: "rgba(135, 131, 120, 0.15)",
+        },
+        ".cm-inline-code:has(+ .cm-formatting-inline-code)": {
+          padding: "1px 0",
+        },
+        ".cm-inline-code:not(.cm-formatting-inline-code):not(:has(+ .cm-formatting-inline-code))":
+          {
+            borderRadius: "2px",
+            padding: "1px 4px",
+          },
+        ".cm-formatting-inline-code:has(+ .cm-inline-code)": {
+          borderTopLeftRadius: "2px",
+          borderBottomLeftRadius: "2px",
+          padding: "1px 0 1px 4px",
+        },
+        ".cm-inline-code + .cm-formatting-inline-code": {
+          borderTopRightRadius: "2px",
+          borderBottomRightRadius: "2px",
+          padding: "1px 4px 1px 0",
+        },
       }),
       markdown({
         base: markdownLanguage,
