@@ -9,8 +9,9 @@ import { syntaxTree } from "@codemirror/language";
 import { EditorState, Range, SelectionRange } from "@codemirror/state";
 import { SyntaxNodeRef } from "@lezer/common";
 import { isSelectionOverlapNode } from "./utils/cursor";
+import { generateDecorationRanges } from "./utils/decoration";
 
-const decorationHide = Decoration.mark({ class: "cm-token" });
+const hiddenDecoration = Decoration.replace({});
 
 const activeLine = (
   state: EditorState,
@@ -49,7 +50,7 @@ const heading = (node: SyntaxNodeRef): Range<Decoration> => {
         class: "cm-heading-line cm-heading-setex-line",
       }).range(node.from);
     } else {
-      return decorationHide.range(node.from, node.to + 1);
+      return hiddenDecoration.range(node.from, node.to + 1);
     }
   }
 
@@ -62,19 +63,41 @@ function camelToSnake(camelCaseStr: string) {
     .toLowerCase(); // 결과를 소문자로 변환
 }
 
-const emphasis = (node: SyntaxNodeRef): Range<Decoration> => {
-  if (node.name.includes("Mark")) {
-    return decorationHide.range(node.from, node.to);
-  }
-  return Decoration.mark({ class: `cm-${camelToSnake(node.name)}` }).range(
-    node.from,
-    node.to
+const emphasis = (
+  cursor: SelectionRange,
+  node: SyntaxNodeRef
+): Range<Decoration>[] => {
+  const decorations: Range<Decoration>[] = [];
+  const name = camelToSnake(node.name);
+
+  const markerLength = node.type.is("Emphasis") ? 1 : 2;
+
+  decorations.push(
+    Decoration.mark({ class: `cm-${name}` }).range(
+      node.from + markerLength,
+      node.to - markerLength
+    )
   );
+
+  const markerDeco = isSelectionOverlapNode(cursor, node)
+    ? Decoration.mark({
+        class: `cm-formatting cm-formatting-${name} cm-${name}`,
+      })
+    : hiddenDecoration;
+
+  decorations.push(
+    ...generateDecorationRanges(markerDeco, [
+      [node.from, node.from + markerLength],
+      [node.to - markerLength, node.to],
+    ])
+  );
+
+  return decorations;
 };
 
 const code = (node: SyntaxNodeRef): Range<Decoration>[] => {
   if (node.type.is("CodeMark") && node.matchContext(["InlineCode"])) {
-    return [decorationHide.range(node.from, node.to)];
+    return [hiddenDecoration.range(node.from, node.to)];
   }
 
   if (node.type.is("InlineCode")) {
@@ -108,7 +131,7 @@ const quote = (
       Decoration.line({ class: "cm-block-quote-end" }).range(endLine.from),
     ];
   }
-  return [decorationHide.range(node.from, node.to + 1)];
+  return [hiddenDecoration.range(node.from, node.to + 1)];
 };
 
 const horizontalRule = (node: SyntaxNodeRef): Range<Decoration> => {
@@ -135,15 +158,6 @@ class MarkVisionPlugin implements PluginValue {
     syntaxTree(view.state).iterate({
       enter(node) {
         decorations.push(...activeLine(view.state, cursor));
-        // cursor가 node 안에 있거나 node가 selection range에 포함되는 경우, 토큰을 보여준다.
-        if (
-          !node.type.is("Document") &&
-          !node.type.is("Paragraph") &&
-          !node.name.includes("Mark") &&
-          isSelectionOverlapNode(cursor, node)
-        ) {
-          return false;
-        }
 
         // * ==== 1. Heading ====
         if (node.name.includes("Heading") || node.type.is("HeaderMark")) {
@@ -155,12 +169,13 @@ class MarkVisionPlugin implements PluginValue {
         if (
           [
             "Emphasis", // *, _, **, __ (StrongEmphasis도 같이 계산)
+            "StrongEmphasis",
             "Strikethrough", // ~~
             "Highlight", // ==
             "Underline", // --
-          ].some((name) => node.name.includes(name))
+          ].includes(node.name)
         ) {
-          decorations.push(emphasis(node));
+          decorations.push(...emphasis(cursor, node));
         }
         // * =====================
 

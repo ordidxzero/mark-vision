@@ -11,9 +11,6 @@ let Punctuation = /[!"#$%&'()*+,\-.\/:;<=>?@\[\\\]^_`{|}~\xA1\u2010-\u2027]/;
 export const highlightCSS = HighlightStyle.define([
   {
     tag: highlightTag,
-    // backgroundColor: "rgba(255, 177, 80, 0.3)",
-    // padding: "2px",
-    // borderRadius: "2px",
   },
 ]);
 
@@ -53,7 +50,7 @@ const Highlight: MarkdownConfig = {
   ],
   props: [
     styleTags({
-      "Highlight/...": tags.special(highlightTag),
+      Highlight: tags.special(highlightTag),
     }),
   ],
 };

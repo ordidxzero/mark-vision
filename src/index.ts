@@ -32,6 +32,30 @@ export default function (config: any) {
       syntaxHighlighting(highlightCSS),
       syntaxHighlighting(underlineCSS),
       syntaxHighlighting(defaultHighlightStyle),
+      EditorView.theme({
+        // Highlight Styling
+        ".cm-highlight": {
+          backgroundColor: "rgba(255, 177, 80, 0.3)",
+        },
+        ".cm-highlight:has(+ .cm-formatting-highlight)": {
+          padding: "1px 0",
+        },
+        ".cm-highlight:not(.cm-formatting-highlight):not(:has(+ .cm-formatting-highlight))":
+          {
+            borderRadius: "2px",
+            padding: "1px 4px",
+          },
+        ".cm-formatting-highlight:has(+ .cm-highlight)": {
+          borderTopLeftRadius: "2px",
+          borderBottomLeftRadius: "2px",
+          padding: "1px 0 1px 4px",
+        },
+        ".cm-highlight + .cm-formatting-highlight": {
+          borderTopRightRadius: "2px",
+          borderBottomRightRadius: "2px",
+          padding: "1px 4px 1px 0",
+        },
+      }),
       markdown({
         base: markdownLanguage,
         extensions: [ExtendedOrderedList, Highlight, Underline],

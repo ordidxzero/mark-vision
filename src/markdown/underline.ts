@@ -11,7 +11,7 @@ let Punctuation = /[!"#$%&'()*+,\-.\/:;<=>?@\[\\\]^_`{|}~\xA1\u2010-\u2027]/;
 export const underlineCSS = HighlightStyle.define([
   {
     tag: underlineTag,
-    // textDecoration: "underline",
+    textDecoration: "underline",
   },
 ]);
 
