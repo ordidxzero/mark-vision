@@ -214,6 +214,7 @@ class MarkVisionPlugin implements PluginValue {
         // * =================
 
         // * ==== 6. Link, Image, Footnote ====
+        // * >> extensions/link.ts
         // * ==================================
 
         // * ==== 7. Quote ====

@@ -12,6 +12,7 @@ import ExtendedOrderedList from "./markdown/extendedOrderedList";
 import { Prec } from "@codemirror/state";
 import { insertNewlineContinueMarkup } from "./commands/insertNewlineContinueMarkup";
 import { indentWithTab } from "./commands/indentWithTab";
+import linkPlugin from "./extensions/link";
 
 export default function (config: any) {
   return ViewPlugin.fromClass(MarkVisionPlugin, {
@@ -29,6 +30,7 @@ export default function (config: any) {
         ])
       ),
       taskPlugin,
+      linkPlugin,
       syntaxHighlighting(highlightCSS),
       syntaxHighlighting(underlineCSS),
       syntaxHighlighting(defaultHighlightStyle),
@@ -77,6 +79,12 @@ export default function (config: any) {
           borderTopRightRadius: "2px",
           borderBottomRightRadius: "2px",
           padding: "1px 4px 1px 0",
+        },
+
+        // Link Styling
+        ".cm-anchor": {
+          textDecoration: "underline",
+          color: "blue",
         },
       }),
       markdown({
