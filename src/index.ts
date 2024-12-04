@@ -13,6 +13,7 @@ import { Prec } from "@codemirror/state";
 import { insertNewlineContinueMarkup } from "./commands/insertNewlineContinueMarkup";
 import { indentWithTab } from "./commands/indentWithTab";
 import linkPlugin from "./extensions/link";
+import Hashtag, { hashtagCSS } from "./markdown/hashtag";
 
 export default function (config: any) {
   return ViewPlugin.fromClass(MarkVisionPlugin, {
@@ -33,6 +34,7 @@ export default function (config: any) {
       linkPlugin,
       syntaxHighlighting(highlightCSS),
       syntaxHighlighting(underlineCSS),
+      syntaxHighlighting(hashtagCSS),
       syntaxHighlighting(defaultHighlightStyle),
       EditorView.theme({
         // Highlight Styling
@@ -86,10 +88,26 @@ export default function (config: any) {
           textDecoration: "underline",
           color: "blue",
         },
+
+        // Hashtag Styling
+        ".cm-tag": {
+          backgroundColor: "#008CFF",
+        },
+        ".cm-tag *": {
+          fontSize: "0.75rem",
+        },
+        ".cm-tag.cm-tag-begin": {
+          borderRadius: "2px 0 0 2px",
+          padding: "1px 0 1px 4px",
+        },
+        ".cm-tag.cm-tag-end": {
+          borderRadius: "0 2px 2px 0",
+          padding: "1px 4px 1px 0",
+        },
       }),
       markdown({
         base: markdownLanguage,
-        extensions: [ExtendedOrderedList, Highlight, Underline],
+        extensions: [ExtendedOrderedList, Highlight, Underline, Hashtag],
         addKeymap: false,
       }),
       EditorView.lineWrapping,

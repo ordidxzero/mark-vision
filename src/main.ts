@@ -160,6 +160,16 @@ const quote = (
   return [hiddenDecoration.range(node.from, node.to + 1)];
 };
 
+const hashtag = (node: SyntaxNodeRef): Range<Decoration>[] => {
+  const markerDeco = Decoration.mark({
+    class: "cm-formatting cm-formatting-tag cm-tag cm-tag-begin",
+  }).range(node.from, node.from + 1);
+  const nodeDeco = Decoration.mark({
+    class: "cm-tag cm-tag-end",
+  }).range(node.from + 1, node.to);
+  return [markerDeco, nodeDeco];
+};
+
 const horizontalRule = (node: SyntaxNodeRef): Range<Decoration> => {
   return Decoration.line({ class: "cm-horizontal-rule" }).range(node.from);
 };
@@ -235,6 +245,9 @@ class MarkVisionPlugin implements PluginValue {
         // * ==================
 
         // * ==== 8. HashTag ====
+        if (node.type.is("Hashtag")) {
+          decorations.push(...hashtag(node));
+        }
         // * ====================
 
         // * ==== 9. Mention ====
