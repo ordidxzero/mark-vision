@@ -33,28 +33,39 @@ const activeLine = (
   return [Decoration.line({ class: "cm-active" }).range(startLine.from)];
 };
 
-const heading = (node: SyntaxNodeRef): Range<Decoration> => {
-  if (node.name.includes("Heading")) {
-    const level = node.name.split("Heading")[1];
-    return Decoration.line({
-      class: `cm-heading-${level} cm-heading-line`,
-    }).range(node.from);
-  }
+const heading = (
+  state: EditorState,
+  node: SyntaxNodeRef
+): Range<Decoration>[] => {
+  const [cursor] = state.selection.ranges;
+  const decorations: Range<Decoration>[] = [];
+  const level = node.name.split("Heading")[1];
 
-  if (node.type.is("HeaderMark")) {
-    if (
-      node.matchContext(["SetextHeading1"]) ||
-      node.matchContext(["SetextHeading2"])
-    ) {
-      return Decoration.line({
-        class: "cm-heading-line cm-heading-setex-line",
-      }).range(node.from);
-    } else {
-      return hiddenDecoration.range(node.from, node.to + 1);
+  if (node.name.includes("Setext")) {
+    const endLine = state.doc.lineAt(node.to);
+    let deco = Decoration.mark({ class: `cm-heading cm-heading-${level}` });
+    if (isSelectionOverlapNode(cursor, node)) {
+      deco = Decoration.mark({
+        class: `cm-formatting cm-formatting-heading cm-formatting-heading-${level} cm-heading cm-heading-${level}`,
+      });
     }
+    decorations.push(deco.range(endLine.from, endLine.from + endLine.length));
+  } else {
+    decorations.push(
+      Decoration.line({
+        class: `cm-heading cm-heading-${level}`,
+      }).range(node.from)
+    );
+    let deco = Decoration.replace({});
+    if (isSelectionOverlapNode(cursor, node)) {
+      deco = Decoration.mark({
+        class: `cm-formatting cm-formatting-heading cm-formatting-heading-${level} cm-heading cm-heading-${level}`,
+      });
+    }
+    decorations.push(deco.range(node.from, node.from + +level + 1));
   }
 
-  throw Error("Not Implemented");
+  return decorations;
 };
 
 function camelToSnake(camelCaseStr: string) {
@@ -175,8 +186,8 @@ class MarkVisionPlugin implements PluginValue {
         decorations.push(...activeLine(view.state, cursor));
 
         // * ==== 1. Heading ====
-        if (node.name.includes("Heading") || node.type.is("HeaderMark")) {
-          decorations.push(heading(node));
+        if (node.name.includes("Heading")) {
+          decorations.push(...heading(view.state, node));
         }
         // * ====================
 
