@@ -170,6 +170,16 @@ const hashtag = (node: SyntaxNodeRef): Range<Decoration>[] => {
   return [markerDeco, nodeDeco];
 };
 
+const mention = (node: SyntaxNodeRef): Range<Decoration>[] => {
+  const markerDeco = Decoration.mark({
+    class: "cm-formatting cm-formatting-mention cm-mention cm-mention-begin",
+  }).range(node.from, node.from + 1);
+  const nodeDeco = Decoration.mark({
+    class: "cm-mention cm-mention-end",
+  }).range(node.from + 1, node.to);
+  return [markerDeco, nodeDeco];
+};
+
 const horizontalRule = (node: SyntaxNodeRef): Range<Decoration> => {
   return Decoration.line({ class: "cm-horizontal-rule" }).range(node.from);
 };
@@ -251,6 +261,9 @@ class MarkVisionPlugin implements PluginValue {
         // * ====================
 
         // * ==== 9. Mention ====
+        if (node.type.is("Mention")) {
+          decorations.push(...mention(node));
+        }
         // * ====================
 
         // * ==== 10. Alert ====

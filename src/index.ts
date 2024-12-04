@@ -14,6 +14,7 @@ import { insertNewlineContinueMarkup } from "./commands/insertNewlineContinueMar
 import { indentWithTab } from "./commands/indentWithTab";
 import linkPlugin from "./extensions/link";
 import Hashtag, { hashtagCSS } from "./markdown/hashtag";
+import Mention, { mentionCSS } from "./markdown/mention";
 
 export default function (config: any) {
   return ViewPlugin.fromClass(MarkVisionPlugin, {
@@ -35,6 +36,7 @@ export default function (config: any) {
       syntaxHighlighting(highlightCSS),
       syntaxHighlighting(underlineCSS),
       syntaxHighlighting(hashtagCSS),
+      syntaxHighlighting(mentionCSS),
       syntaxHighlighting(defaultHighlightStyle),
       EditorView.theme({
         // Highlight Styling
@@ -104,10 +106,32 @@ export default function (config: any) {
           borderRadius: "0 2px 2px 0",
           padding: "1px 4px 1px 0",
         },
+
+        // Mention Styling
+        ".cm-mention": {
+          backgroundColor: "rgba(135, 131, 120, 0.15)",
+        },
+        ".cm-mention *": {
+          fontSize: "0.75rem",
+        },
+        ".cm-mention.cm-mention-begin": {
+          borderRadius: "2px 0 0 2px",
+          padding: "1px 0 1px 4px",
+        },
+        ".cm-mention.cm-mention-end": {
+          borderRadius: "0 2px 2px 0",
+          padding: "1px 4px 1px 0",
+        },
       }),
       markdown({
         base: markdownLanguage,
-        extensions: [ExtendedOrderedList, Highlight, Underline, Hashtag],
+        extensions: [
+          ExtendedOrderedList,
+          Highlight,
+          Underline,
+          Hashtag,
+          Mention,
+        ],
         addKeymap: false,
       }),
       EditorView.lineWrapping,
