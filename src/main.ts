@@ -107,31 +107,6 @@ const emphasis = (
   return decorations;
 };
 
-const list = (node: SyntaxNodeRef): Range<Decoration> => {
-  return Decoration.mark({ class: "cm-list-item" }).range(
-    node.from,
-    node.to + 1
-  );
-};
-
-const quote = (
-  node: SyntaxNodeRef,
-  state: EditorState
-): Range<Decoration>[] => {
-  if (node.type.is("Blockquote")) {
-    const blockquouteLines = state.doc
-      .sliceString(node.from, node.to)
-      .split("\n").length;
-    const startLine = state.doc.lineAt(node.from);
-    const endLine = state.doc.line(startLine.number + blockquouteLines - 1);
-    return [
-      Decoration.line({ class: "cm-block-quote-begin" }).range(startLine.from),
-      Decoration.line({ class: "cm-block-quote-end" }).range(endLine.from),
-    ];
-  }
-  return [hiddenDecoration.range(node.from, node.to + 1)];
-};
-
 const hashtag = (node: SyntaxNodeRef): Range<Decoration>[] => {
   const markerDeco = Decoration.mark({
     class: "cm-formatting cm-formatting-tag cm-tag cm-tag-begin",
@@ -173,6 +148,22 @@ const horizontalRule = (
       ]
     );
   }
+  return decorations;
+};
+
+const escape = (
+  state: EditorState,
+  node: SyntaxNodeRef
+): Range<Decoration>[] => {
+  const decorations: Range<Decoration>[] = [];
+  const [cursor] = state.selection.ranges;
+  let deco = Decoration.replace({});
+  if (isSelectionOverlapNode(cursor, node)) {
+    deco = Decoration.mark({
+      class: `cm-formatting cm-formatting-escape cm-escape`,
+    });
+  }
+  decorations.push(deco.range(node.from, node.from + 1));
   return decorations;
 };
 
@@ -228,9 +219,7 @@ class MarkVisionPlugin implements PluginValue {
         // * ============================
 
         // * ==== 5. List ====
-        if (node.type.is("ListMark")) {
-          decorations.push(list(node));
-        }
+        // * >> markdown/extendedOrderedList.ts
         // * =================
 
         // * ==== 6. Link, Image, Footnote ====
@@ -253,16 +242,22 @@ class MarkVisionPlugin implements PluginValue {
         }
         // * ====================
 
-        // * ==== 10. Alert ====
+        // * ==== 10. Escape ====
+        if (node.type.is("Escape")) {
+          decorations.push(...escape(view.state, node));
+        }
+        // * ====================
+
+        // * ==== 11. Alert ====
         // * ===================
 
-        // * ==== 11. Emoji ====
+        // * ==== 12. Emoji ====
         // * ===================
 
-        // * ==== 12. Table ====
+        // * ==== 13. Table ====
         // * ===================
 
-        // * ==== 13. Front matter ====
+        // * ==== 14. Front matter ====
         // * ==========================
       },
     });
