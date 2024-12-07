@@ -17,6 +17,7 @@ import Hashtag, { hashtagCSS } from "./markdown/hashtag";
 import Mention, { mentionCSS } from "./markdown/mention";
 import codePlugin from "./extensions/code";
 import quotePlugin from "./extensions/quote";
+import footnotePlugin from "./extensions/footnote";
 
 export default function (config: any) {
   return ViewPlugin.fromClass(MarkVisionPlugin, {
@@ -37,6 +38,7 @@ export default function (config: any) {
       linkPlugin,
       codePlugin,
       quotePlugin,
+      footnotePlugin,
       syntaxHighlighting(highlightCSS),
       syntaxHighlighting(underlineCSS),
       syntaxHighlighting(hashtagCSS),
