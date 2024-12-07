@@ -10,6 +10,7 @@ import { EditorState, Range, SelectionRange } from "@codemirror/state";
 import { SyntaxNodeRef } from "@lezer/common";
 import { isSelectionOverlapNode } from "./utils/cursor";
 import { generateDecorationRanges } from "./utils/decoration";
+import HorizontalRuleWidget from "./widgets/HorizontalRule";
 
 const hiddenDecoration = Decoration.replace({});
 
@@ -106,35 +107,6 @@ const emphasis = (
   return decorations;
 };
 
-const code = (
-  cursor: SelectionRange,
-  node: SyntaxNodeRef
-): Range<Decoration>[] => {
-  const decorations: Range<Decoration>[] = [];
-  const name = camelToSnake(node.name);
-  if (node.type.is("InlineCode")) {
-    decorations.push(
-      Decoration.mark({ class: `cm-${name}` }).range(node.from + 1, node.to - 1)
-    );
-
-    const markerDeco = isSelectionOverlapNode(cursor, node)
-      ? Decoration.mark({
-          class: `cm-formatting cm-formatting-${name} cm-${name}`,
-        })
-      : hiddenDecoration;
-
-    decorations.push(
-      ...generateDecorationRanges(markerDeco, [
-        [node.from, node.from + 1],
-        [node.to - 1, node.to],
-      ])
-    );
-    return decorations;
-  }
-
-  return [Decoration.line({ class: "temp" }).range(node.from)];
-};
-
 const list = (node: SyntaxNodeRef): Range<Decoration> => {
   return Decoration.mark({ class: "cm-list-item" }).range(
     node.from,
@@ -180,8 +152,28 @@ const mention = (node: SyntaxNodeRef): Range<Decoration>[] => {
   return [markerDeco, nodeDeco];
 };
 
-const horizontalRule = (node: SyntaxNodeRef): Range<Decoration> => {
-  return Decoration.line({ class: "cm-horizontal-rule" }).range(node.from);
+const horizontalRule = (
+  state: EditorState,
+  node: SyntaxNodeRef
+): Range<Decoration>[] => {
+  const decorations: Range<Decoration>[] = [
+    Decoration.line({ class: "cm-formatting cm-formatting-hr cm-hr" }).range(
+      node.from
+    ),
+  ];
+  const line = state.doc.lineAt(node.from);
+  const [cursor] = state.selection.ranges;
+  if (!isSelectionOverlapNode(cursor, node)) {
+    decorations.push(
+      ...[
+        Decoration.widget({ widget: new HorizontalRuleWidget() }).range(
+          line.from
+        ),
+        Decoration.replace({}).range(node.from, node.to),
+      ]
+    );
+  }
+  return decorations;
 };
 
 class MarkVisionPlugin implements PluginValue {
@@ -226,15 +218,12 @@ class MarkVisionPlugin implements PluginValue {
         // * =====================
 
         // * ==== 3. InlineCode, FencedCode ====
-        if (node.name.includes("Code") && !node.name.includes("Mark")) {
-          // InlineCode, FencedCode, CodeText
-          decorations.push(...code(cursor, node));
-        }
+        // * >> extensions/code.ts
         // * ===================================
 
         // * ==== 4. Horizontal Rule ====
         if (node.type.is("HorizontalRule")) {
-          decorations.push(horizontalRule(node));
+          decorations.push(...horizontalRule(view.state, node));
         }
         // * ============================
 
@@ -249,9 +238,7 @@ class MarkVisionPlugin implements PluginValue {
         // * ==================================
 
         // * ==== 7. Quote ====
-        if (node.name.toLowerCase().includes("quote")) {
-          decorations.push(...quote(node, view.state));
-        }
+        // * >> extensions/quote.ts
         // * ==================
 
         // * ==== 8. HashTag ====

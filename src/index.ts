@@ -9,18 +9,20 @@ import {
 import Underline, { underlineCSS } from "./markdown/underline";
 import taskPlugin from "./extensions/task";
 import ExtendedOrderedList from "./markdown/extendedOrderedList";
-import { Prec } from "@codemirror/state";
+import { EditorState, Prec } from "@codemirror/state";
 import { insertNewlineContinueMarkup } from "./commands/insertNewlineContinueMarkup";
 import { indentWithTab } from "./commands/indentWithTab";
 import linkPlugin from "./extensions/link";
 import Hashtag, { hashtagCSS } from "./markdown/hashtag";
 import Mention, { mentionCSS } from "./markdown/mention";
+import codePlugin from "./extensions/code";
+import quotePlugin from "./extensions/quote";
 
 export default function (config: any) {
   return ViewPlugin.fromClass(MarkVisionPlugin, {
     decorations: (v) => v.decorations,
     provide: (p) => [
-      EditorView.theme({
+      EditorView.baseTheme({
         "&.cm-focused": {
           outline: "none",
         },
@@ -33,6 +35,8 @@ export default function (config: any) {
       ),
       taskPlugin,
       linkPlugin,
+      codePlugin,
+      quotePlugin,
       syntaxHighlighting(highlightCSS),
       syntaxHighlighting(underlineCSS),
       syntaxHighlighting(hashtagCSS),
@@ -121,6 +125,47 @@ export default function (config: any) {
         ".cm-mention.cm-mention-end": {
           borderRadius: "0 2px 2px 0",
           padding: "1px 4px 1px 0",
+        },
+
+        // Horizontal Rule Styling
+        ".cm-hr": {
+          display: "flex",
+          alignItems: "center",
+        },
+        ".cm-hr hr": {
+          width: "100%",
+          borderColor: "black",
+        },
+
+        // Codeblock Styling
+        ".cm-line.cm-codeblock-bg": {
+          display: "flex",
+          backgroundColor: "rgb(156, 156, 156, 0.15)",
+          margin: "0 8px",
+          paddingLeft: "8px",
+        },
+        ".cm-codeblock-bg.cm-codeblock-begin-bg": {
+          borderTopLeftRadius: "4px",
+          borderTopRightRadius: "4px",
+        },
+        ".cm-codeblock-bg.cm-codeblock-end-bg": {
+          borderBottomLeftRadius: "4px",
+          borderBottomRightRadius: "4px",
+        },
+
+        // Blockquote Styling
+        ".cm-line.cm-blockquote-bg": {
+          display: "flex",
+          backgroundColor: "rgb(156, 156, 156, 0.15)",
+          margin: "0 8px",
+          paddingLeft: "8px",
+          borderLeft: "1px solid black",
+        },
+        ".cm-blockquote-bg.cm-blockquote-begin-bg": {
+          borderTopRightRadius: "4px",
+        },
+        ".cm-blockquote-bg.cm-blockquote-end-bg": {
+          borderBottomRightRadius: "4px",
         },
       }),
       markdown({
