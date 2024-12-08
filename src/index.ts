@@ -20,7 +20,7 @@ import quotePlugin from "./extensions/quote";
 import footnotePlugin from "./extensions/footnote";
 import { Alert } from "./markdown/alert";
 
-export default function (config: any) {
+export default function (config?: any) {
   return ViewPlugin.fromClass(MarkVisionPlugin, {
     decorations: (v) => v.decorations,
     provide: (p) => [
