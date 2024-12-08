@@ -18,6 +18,7 @@ import Mention, { mentionCSS } from "./markdown/mention";
 import codePlugin from "./extensions/code";
 import quotePlugin from "./extensions/quote";
 import footnotePlugin from "./extensions/footnote";
+import { Alert } from "./markdown/alert";
 
 export default function (config: any) {
   return ViewPlugin.fromClass(MarkVisionPlugin, {
@@ -178,6 +179,7 @@ export default function (config: any) {
           Underline,
           Hashtag,
           Mention,
+          Alert,
         ],
         addKeymap: false,
       }),
