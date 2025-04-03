@@ -7,9 +7,6 @@ import {
 } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
 import { EditorState, Range, SelectionRange } from "@codemirror/state";
-import { SyntaxNodeRef } from "@lezer/common";
-import { isSelectionOverlapNode } from "./utils/cursor";
-import HorizontalRuleWidget from "./widgets/HorizontalRule";
 
 const activeLine = (
   state: EditorState,
@@ -31,42 +28,6 @@ const activeLine = (
   return [Decoration.line({ class: "cm-active" }).range(startLine.from)];
 };
 
-const hashtag = (node: SyntaxNodeRef): Range<Decoration>[] => {
-  const markerDeco = Decoration.mark({
-    class: "cm-formatting cm-formatting-tag cm-tag cm-tag-begin",
-  }).range(node.from, node.from + 1);
-  const nodeDeco = Decoration.mark({
-    class: "cm-tag cm-tag-end",
-  }).range(node.from + 1, node.to);
-  return [markerDeco, nodeDeco];
-};
-
-const mention = (node: SyntaxNodeRef): Range<Decoration>[] => {
-  const markerDeco = Decoration.mark({
-    class: "cm-formatting cm-formatting-mention cm-mention cm-mention-begin",
-  }).range(node.from, node.from + 1);
-  const nodeDeco = Decoration.mark({
-    class: "cm-mention cm-mention-end",
-  }).range(node.from + 1, node.to);
-  return [markerDeco, nodeDeco];
-};
-
-const escape = (
-  state: EditorState,
-  node: SyntaxNodeRef
-): Range<Decoration>[] => {
-  const decorations: Range<Decoration>[] = [];
-  const [cursor] = state.selection.ranges;
-  let deco = Decoration.replace({});
-  if (isSelectionOverlapNode(cursor, node)) {
-    deco = Decoration.mark({
-      class: `cm-formatting cm-formatting-escape cm-escape`,
-    });
-  }
-  decorations.push(deco.range(node.from, node.from + 1));
-  return decorations;
-};
-
 class MarkVisionPlugin implements PluginValue {
   decorations: DecorationSet;
 
@@ -85,7 +46,7 @@ class MarkVisionPlugin implements PluginValue {
     const [cursor] = view.state.selection.ranges;
 
     syntaxTree(view.state).iterate({
-      enter(node) {
+      enter() {
         decorations.push(...activeLine(view.state, cursor));
       },
     });
