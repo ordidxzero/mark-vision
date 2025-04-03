@@ -8,13 +8,6 @@ const underlineTag = Tag.define();
 
 let Punctuation = /[!"#$%&'()*+,\-.\/:;<=>?@\[\\\]^_`{|}~\xA1\u2010-\u2027]/;
 
-export const underlineCSS = HighlightStyle.define([
-  {
-    tag: underlineTag,
-    textDecoration: "underline",
-  },
-]);
-
 const Underline: MarkdownConfig = {
   defineNodes: ["Underline"],
   parseInline: [
@@ -26,7 +19,7 @@ const Underline: MarkdownConfig = {
         // 문자가 입력될 때마다 이 함수가 호출된다. -1을 리턴하면 아무것도 안하는 것.
         // console.log(next, start);
         if (
-          next != 45 /* '=' */ ||
+          next != 45 /* '-' */ ||
           cx.char(start + 1) != 45 ||
           cx.char(start + 2) == 45
         ) {

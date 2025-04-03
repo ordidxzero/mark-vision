@@ -19,8 +19,8 @@ const Mention: MarkdownConfig = {
         // pos: 현재 위치, next: 현재 위치에 입력된 문자
         // cx.char(pos+1)은 next보다 뒤에 있음. 즉, cx.char(pos) = next임
         if (
-          next != 64 /* '#' */ ||
-          (pos > 0 && cx.char(pos - 1) == 64) /* '##' */
+          next != 64 /* '@' */ ||
+          (pos > 0 && cx.char(pos - 1) == 64) /* '@@' */
         )
           return -1;
 

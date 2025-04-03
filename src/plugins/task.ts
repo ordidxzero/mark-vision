@@ -7,7 +7,7 @@ import {
   DecorationSet,
 } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
-import { EditorState, Range, RangeSet, StateField } from "@codemirror/state";
+import { EditorState, Range, RangeSet } from "@codemirror/state";
 import { isSelectionBetween, isSelectionOverlapNode } from "../utils/cursor";
 
 // DOM 요소를 만드는 역할
@@ -78,23 +78,6 @@ export function toggleTask(view: EditorView, pos: number) {
   return true;
 }
 
-// transaction이 디스패치되면 아래 update 함수 호출
-export function taskExtension() {
-  return StateField.define<DecorationSet>({
-    create(state) {
-      return tasks(state);
-    },
-
-    update(_, transaction) {
-      return tasks(transaction.state);
-    },
-
-    provide(field) {
-      return EditorView.decorations.from(field);
-    },
-  });
-}
-
 const taskPlugin = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
@@ -127,4 +110,36 @@ const taskPlugin = ViewPlugin.fromClass(
   }
 );
 
-export default taskPlugin;
+const taskTheme = EditorView.baseTheme({
+  ".cm-task-checkbox input[type='checkbox']": {
+    position: "relative",
+    top: "2px",
+    width: "13.5px",
+    height: "13.5px",
+    transformOrigin: "center",
+    transform: "scale(1.1)",
+    border: "1px solid #939393",
+    cursor: "pointer",
+    outline: "none",
+    appearance: "none",
+    borderRadius: "50%",
+    transition: "100ms",
+  },
+  ".cm-task-checkbox input[type='checkbox']:not(:checked):hover": {
+    borderColor: "#d3d3d3",
+  },
+
+  ".cm-task-checkbox input[type='checkbox']:checked": {
+    backgroundPosition: "center",
+    backgroundSize: "75%",
+    backgroundRepeat: "no-repeat",
+    backgroundColor: "#008cff",
+    borderColor: "#008cff",
+    backgroundImage:
+      'url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNC41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNoZWNrIj48cGF0aCBkPSJNMjAgNiA5IDE3bC01LTUiLz48L3N2Zz4=")',
+  },
+});
+
+const task = () => [taskPlugin, taskTheme];
+
+export default task;
