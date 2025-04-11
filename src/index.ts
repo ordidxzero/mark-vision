@@ -1,6 +1,7 @@
 import { EditorView, keymap, ViewPlugin } from "@codemirror/view";
 import MarkVisionPlugin from "./main";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import { closeBrackets } from "@codemirror/autocomplete";
 import Highlight from "./markdown/highlight";
 import Underline from "./markdown/underline";
 import ExtendedOrderedList from "./markdown/extendedOrderedList";
@@ -10,7 +11,6 @@ import { indentWithTab } from "./commands/indentWithTab";
 import Hashtag from "./markdown/hashtag";
 import Mention from "./markdown/mention";
 import quotePlugin from "./extensions/quote";
-import footnotePlugin from "./extensions/footnote";
 import { Alert } from "./markdown/alert";
 import heading from "./plugins/heading";
 import emphasis from "./plugins/emphasis";
@@ -22,6 +22,7 @@ import hashtag from "./plugins/hashtag";
 import task from "./plugins/task";
 import image from "./plugins/image";
 import link from "./plugins/link";
+import footnote from "./plugins/footnote";
 
 export default function (config?: any) {
   return ViewPlugin.fromClass(MarkVisionPlugin, {
@@ -48,8 +49,9 @@ export default function (config?: any) {
       task(),
       link(),
       image(),
+      footnote(),
+      closeBrackets(),
       quotePlugin,
-      footnotePlugin,
       EditorView.theme({
         // Blockquote Styling
         ".cm-line.cm-blockquote-bg": {

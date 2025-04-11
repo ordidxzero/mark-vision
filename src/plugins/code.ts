@@ -79,11 +79,9 @@ class CodePlugin implements PluginValue {
           const isMouseOver = isSelectionOverlapNode(cursor, node);
           const startLine = view.state.doc.lineAt(node.from);
           const endLine = view.state.doc.lineAt(node.to);
-          for (
-            let lineNum = startLine.number;
-            lineNum <= endLine.number;
-            lineNum++
-          ) {
+
+          let lineNum = startLine.number;
+          while (lineNum <= endLine.number) {
             let backgroundDecoClass = "cm-codeblock cm-codeblock-bg";
             const line = view.state.doc.line(lineNum);
             if (line.number === startLine.number) {
@@ -96,7 +94,9 @@ class CodePlugin implements PluginValue {
             decorations.push(
               Decoration.line({ class: backgroundDecoClass }).range(line.from)
             );
+            lineNum++;
           }
+
           if (isMouseOver) {
             decorations.push(
               Decoration.mark({

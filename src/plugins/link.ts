@@ -99,10 +99,8 @@ class LinkPlugin implements PluginValue {
               }
             });
           } else {
-            const NodeWidget = LinkWidget;
-
             const deco = Decoration.replace({
-              widget: new NodeWidget(title, url),
+              widget: new LinkWidget(title, url),
             });
             decorations.push(deco.range(linkNode.from, linkNode.to));
           }
