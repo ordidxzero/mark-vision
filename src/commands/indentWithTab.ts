@@ -42,6 +42,12 @@ function changeBySelectedLine(
   });
 }
 
+/**
+ * ListItem에서 숫자의 위치를 가져오는 함수
+ * @param line `ListItem`을 나타내는 `Line`
+ * @param match RegExp matching 결과
+ * @returns `from`, `to`를 튜플로 반환한다.
+ */
 export function getListNumberPosition(
   line: Line,
   match: RegExpExecArray
@@ -52,12 +58,25 @@ export function getListNumberPosition(
   return [from, to];
 }
 
+/**
+ * ListItem에서 숫자를 추출하는 함수
+ * @param match RegExp matching 결과
+ * @returns
+ */
 function getListNumber(match: RegExpExecArray) {
   const [listMatch, _, delimiter] = match;
   const listNumber = listMatch.split(delimiter)[0].trim();
   return parseInt(listNumber, 10);
 }
 
+/**
+ * 같은 깊이의 이전 숫자를 가져오는 함수
+ * @param state `EditorState`
+ * @param line 현재 ListItem를 나타내는 `Line`
+ * @param condition Matching condition. 해당 조건을 만족하는 Line을 만나면 숫자를 추출하여 반환한다.
+ * @param breakCondition Break condition. 해당 조건을 만족하는 Line을 만나면 탐색을 중지하고 0을 반환한다.
+ * @returns
+ */
 export function getPreviousSiblingListNumber(
   state: EditorState,
   line: Line,
@@ -77,6 +96,11 @@ export function getPreviousSiblingListNumber(
   return 0;
 }
 
+/**
+ * 카운터를 만드는 클로저 함수
+ * @param init 카운터 초기값
+ * @returns
+ */
 function counter(init = 0) {
   let n = init < 0 ? 0 : init;
   return (_: number) => {
@@ -85,6 +109,15 @@ function counter(init = 0) {
   };
 }
 
+/**
+ *
+ * @param state EditorState
+ * @param line 현재 ListItem를 나타내는 `Line`
+ * @param condition Matching condition. `getPreviousSiblingListNumber`로 전달된다.
+ * @param breakCondition Break condition. `getPreviousSiblingListNumber`로 전달된다.
+ * @param initNumber List를 시작할 숫자
+ * @returns
+ */
 export function updateNextSiblingListNumber(
   state: EditorState,
   line: Line,

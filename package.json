@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && esbuild src/index.ts --bundle --minify --format=esm '--external:@*' --outfile=dist/index.js"
+    "build": "tsc && esbuild src/index.ts --bundle --format=esm '--external:@*' --outfile=dist/index.js"
   },
   "exports": {
     "import": "./dist/index.js"

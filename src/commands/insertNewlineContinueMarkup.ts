@@ -27,18 +27,23 @@ class Context {
     readonly node: SyntaxNode, // node
     readonly from: number, // node.from - line.from (line.from을 기준으로 했을 때의 node.from)
     readonly to: number, // 위의 from을 기준으로 재계산된 node.to
-    readonly spaceBefore: string, // type의 앞을 의미하는 것으로 추정. 예를 들어, "2. 123" 이렇게 입력하면 type은 "."이고, spaceBefore은 ""이 된다.
-    readonly spaceAfter: string, // type의 뒤를 의미하는 것으로 추정. 예를 들어, "2. 123" 이렇게 입력하면 spaceAfter는 " "이 된다.
+    readonly spaceBefore: string, // type 앞에 입력된 공백을 의미하는 것으로 추정. 예를 들어, "2. 123" 이렇게 입력하면 type은 "."이고, spaceBefore은 ""이 된다.
+    readonly spaceAfter: string, // type 뒤에 입력된 공백을 의미하는 것으로 추정. 예를 들어, "2. 123" 이렇게 입력하면 spaceAfter는 " "이 된다.
     readonly type: string, // "", ">", ".", "-", "+", "*", "- [ ]", "+ [ ]", "* [ ]" 이런거 들어가는 듯
-    // "" -> FenceCode, ">" -> Blockquote, "." -> OrderedList
+    // "" -> FencedCode, ">" -> Blockquote, "." -> OrderedList
     readonly item: SyntaxNode | null // node가 XList면 item은 ListItem이 들어감.
   ) {}
 
-  // 노드 앞뒤 공백과 들여쓰기를 계산하여 공백 문자열 반환.
+  /**
+   * 노드 앞뒤 공백과 들여쓰기를 계산하여 공백 문자열 반환.
+   * `maxWidth`가 주어지면 해당 길이만큼 padding.
+   * @param maxWidth 헤딩 노드 문법의 최대 길이를 지정해주는 값
+   * @param trailing 문법 이후에 공백을 붙일지 여부
+   * @returns
+   */
   blank(maxWidth: number | null, trailing = true) {
-    let result =
-      this.spaceBefore +
-      (this.node.name == "Blockquote" || this.node.name == "Alert" ? ">" : "");
+    let isBlockquote = ["Blockquote", "Alert"].includes(this.node.name);
+    let result = this.spaceBefore + (isBlockquote ? ">" : "");
     if (maxWidth != null) {
       while (result.length < maxWidth) result += " ";
       return result;
@@ -53,7 +58,12 @@ class Context {
     }
   }
 
-  // (OrderedList인 경우) 새로운 번호를 계산해서 리턴하는 함수
+  /**
+   * (OrderedList인 경우) 새로운 번호를 계산해서 리턴하는 함수
+   * @param doc 이전 줄에 입력된 텍스트 (여기서 '이전 줄'이란 엔터를 치기전 커서가 있던 줄)
+   * @param add 이전 아이템의 숫자에 얼마나 더할지 정하는 값 (ex. 이전 줄: '2. 123'이고, marker(doc, 1)을 수행하면 '3'을 반환함)
+   * @returns
+   */
   marker(doc: Text, add: number) {
     const number =
       this.node.name == "OrderedList"
@@ -63,15 +73,36 @@ class Context {
   }
 }
 
-function getContext(node: SyntaxNode, doc: Text) {
-  const nodes = [];
-  // parent를 순회하면서 ListItem, Blockquote, FencedCode인 node를 저장한다.
-  // 뒤로 갈수록 상위 노드임. 그래서 아래(context 배열)에서 역으로 순회를 한다.
+function getContext_v2(node: SyntaxNode, doc: Text) {
+  const nodes: SyntaxNode[] = [];
   for (
     let cur: SyntaxNode | null = node;
     cur && cur.name != "Document";
     cur = cur.parent
   ) {
+    if (["ListItem", "Blockquote", "Alert"].includes(cur.name)) {
+      nodes.push(cur);
+    }
+  }
+
+  const context: Context[] = [];
+}
+
+/**
+ * 특정 위치의 말단 노드를 가져와서 해당 노드의 상위 노드를 순회하면서 Context 객체를 만들고 그 리스트를 반환
+ * @param node 말단 노드
+ * @param doc 지금까지 입력된 텍스트
+ * @returns
+ */
+export function getContext(node: SyntaxNode, doc: Text) {
+  const nodes: SyntaxNode[] = [];
+  for (
+    let cur: SyntaxNode | null = node;
+    cur && cur.name != "Document";
+    cur = cur.parent // parent를 순회한다.
+  ) {
+    // 특정 타입의 노드만 저장한다. (ListItem, Blockquote, Alert, FencedCode)
+    // 엔터를 입력했을 때 문법이 자동으로 입력되어야하는 노드들만 저장하는 것으로 보인다.
     if (
       cur.name == "ListItem" ||
       cur.name == "Blockquote" ||
@@ -81,26 +112,37 @@ function getContext(node: SyntaxNode, doc: Text) {
       nodes.push(cur);
   }
 
-  const context = [];
+  const context: Context[] = [];
+  // nodes는 뒤로 갈수록 상위 노드가 저장되어있으므로 역으로 순회하는 것으로 추정된다.
   for (let i = nodes.length - 1; i >= 0; i--) {
     const node = nodes[i];
     let match = null;
     const line = doc.lineAt(node.from); // 노드가 위치한 Line
-    const startPos = node.from - line.from;
+    const startPos = node.from - line.from; // 노드의 시작 위치 (line.from을 기준으로 했을 때의 node.from)
     if (node.name == "FencedCode") {
+      // spaceBefore, spaceAfter, type을 전부 빈 문자열로 설정
+      // ? FencedCode를 처리할 필요가 있을까?
       context.push(new Context(node, startPos, startPos, "", "", "", null));
     } else if (
       (node.name == "Blockquote" || node.name == "Alert") &&
-      (match = /^ *>( ?)/.exec(line.text.slice(startPos)))
+      (match = /^ *>( *)/.exec(line.text.slice(startPos)))
+      // /^ *>( *)/.exec(">  123")
+      // ['>  ', '  '] 이렇게 나옴
     ) {
+      let after = match[1],
+        len = match[0].length;
+      if (after.length >= 2) {
+        len -= after.length - 1;
+        after = after.slice(0, 1);
+      }
       context.push(
         new Context(
           node,
           startPos,
-          startPos + match[0].length,
-          "",
-          match[1],
-          ">",
+          startPos + len,
+          "", // spaceBefore
+          after, // spaceAfter
+          ">", // type
           null
         )
       );
@@ -113,18 +155,18 @@ function getContext(node: SyntaxNode, doc: Text) {
     ) {
       let after = match[3],
         len = match[0].length;
-      if (after.length >= 4) {
-        after = after.slice(0, after.length - 4);
-        len -= 4;
+      if (after.length >= 2) {
+        len -= after.length - 1;
+        after = after.slice(0, 1);
       }
       context.push(
         new Context(
           node.parent!,
           startPos,
           startPos + len,
-          match[1],
-          after,
-          match[2],
+          match[1], // spaceBefore
+          after, // spaceAfter
+          match[2], // type
           node
         )
       );
@@ -134,6 +176,11 @@ function getContext(node: SyntaxNode, doc: Text) {
       (match = /^( *)([-+*])( {1,4}\[[ xX]\])?( +)/.exec(
         line.text.slice(startPos)
       ))
+      // /^( *)([-+*])( {1,4}\[[ xX]\])?( +)/.exec("- 123")
+      // ['- ', '', '-', undefined, ' ']
+
+      // /^( *)([-+*])( {1,4}\[[ xX]\])?( +)/.exec("-  [ ] 123")
+      // ['-  [ ] ', '', '-', '  [ ]', ' ']
     ) {
       let after = match[4],
         len = match[0].length;
@@ -148,9 +195,9 @@ function getContext(node: SyntaxNode, doc: Text) {
           node.parent!,
           startPos,
           startPos + len,
-          match[1],
-          after,
-          type,
+          match[1], // spaceBefore
+          after, // spaceAfter
+          type, // type
           node
         )
       );
@@ -159,6 +206,12 @@ function getContext(node: SyntaxNode, doc: Text) {
   return context;
 }
 
+/**
+ * OrderedList 내 ListItem의 숫자를 가져오는 함수
+ * @param item node
+ * @param doc node의 텍스트
+ * @returns
+ */
 function itemNumber(item: SyntaxNode, doc: Text) {
   // item.from + 10인 이유는 그냥 OrderedList의 숫자를 9자리로 제한하기 위한 용도인듯.
   // /^(\s*)(\d+|[A-Z]{1,2}|[a-z]{1,2})(?=[.)])/.exec("AA. 123") > 알파벳 두자리까지 지원하도록 수정하는 경우
@@ -168,6 +221,12 @@ function itemNumber(item: SyntaxNode, doc: Text) {
   return /^(\s*)(\d+)(?=[.)])/.exec(doc.sliceString(item.from, item.to))!;
 }
 
+/**
+ * OrderedList의 숫자를 다시 정렬하는 함수
+ * @param node 123
+ * @param state 123
+ * @param changes 123
+ */
 function reorderList(
   node: SyntaxNode,
   state: EditorState,
@@ -207,6 +266,13 @@ function reorderList(
   }
 }
 
+/**
+ * ..
+ * @param after 123
+ * @param doc 123
+ * @param changes 123
+ * @param offset 123
+ */
 function renumberList(
   after: SyntaxNode,
   doc: Text,
@@ -233,7 +299,13 @@ function renumberList(
   }
 }
 
-function normalizeIndent(content: string, state: EditorState) {
+/**
+ * ..
+ * @param content 123
+ * @param state 123
+ * @returns
+ */
+export function normalizeIndent(content: string, state: EditorState) {
   const blank = /^[ \t]*/.exec(content)![0].length;
   if (!blank || state.facet(indentUnit) != "\t") return content;
   const col = countColumn(content, 4, blank);
@@ -250,6 +322,12 @@ function normalizeIndent(content: string, state: EditorState) {
   return space + content.slice(blank);
 }
 
+/**
+ * ..
+ * @param node 123
+ * @param doc 123
+ * @returns
+ */
 function nonTightList(node: SyntaxNode, doc: Text) {
   if (node.name != "OrderedList" && node.name != "BulletList") return false;
   const first = node.firstChild!,
@@ -261,6 +339,13 @@ function nonTightList(node: SyntaxNode, doc: Text) {
   return line1.number + (empty ? 0 : 1) < line2.number;
 }
 
+/**
+ * ..
+ * @param context 123
+ * @param state 123
+ * @param line 123
+ * @returns
+ */
 function blankLine(context: Context[], state: EditorState, line: Line) {
   let insert = "";
   for (let i = 0, e = context.length - 2; i <= e; i++) {
@@ -307,9 +392,6 @@ export const insertNewlineContinueMarkup: StateCommand = ({
     const line = doc.lineAt(pos);
 
     // tree.resolveInner(pos, -1)는 pos 위치에 있는 가장 말단 노드를 가져옴.
-    // context는 블럭 단위의 집합의 첫 노드를 가져오나..? 예를 들어, ordered list의 첫 노드인 "1. ~~"를 가져오고
-    // context.node = 블럭 단위 집합의 첫 노드
-    // context.item = Enter 치기 이전 줄에 있는 노드
     const context = getContext(tree.resolveInner(pos, -1), doc);
 
     // pos: range.from이고, line은 pos를 기준으로 Line을 가져온거 아닌가? 무조건 pos == line.from 아닌가??
@@ -320,10 +402,7 @@ export const insertNewlineContinueMarkup: StateCommand = ({
       context.pop();
     if (!context.length) return (dont = { range });
     const inner = context[context.length - 1];
-    // spaceAfter는 "2. 123"에서 "123"을 의미함.
-    // inner.to - inner.spaceAfter.length의 의미는 Docuement 내에서 "2. "이 끝난 위치를 의미.
-    // ! 조건문은 무슨 의미인지 파악 불가: 리스트, 인용문이 아닌 경우를 필터링한다.
-    // * 정규표현식 써서 일단 해결
+
     if (
       /^( *)\d+([.)])( *)/.exec(line.text) === null &&
       /^( *)([-+*])( {1,4}\[[ xX]\])?( +)/.exec(line.text) === null &&
@@ -332,13 +411,15 @@ export const insertNewlineContinueMarkup: StateCommand = ({
       return (dont = { range });
     }
 
-    // inner.spaceAfter.length: 1 이상. "1. 123" -> 1, "1.   " -> 3.. "1.  123"처럼 두 칸 띄우면 다음 줄도 두 칸 띄운 상태로 생성됨.
-    // /\S/.test -> 공백이 아니어야 true
     // pos >= inner.to - inner.spaceAfter.length의 의미는 "1. "에서 Enter를 치거나, "1.    " 이런 상황에서 엔터를 치는 경우를 말한다.
+    // 만약 "1|.   " 여기서 엔터를 치게 되면 다음 줄은 공백이 아니므로 pos >= inner.to - inner.spaceAfter.length는 False다.
+    // /\S/.test -> 공백이 아니어야 true
     const emptyLine =
       pos >= inner.to - inner.spaceAfter.length &&
-      !/\S/.test(line.text.slice(inner.to));
-    // Empty line in list
+      !/\S/.test(line.text.slice(inner.to)); // "1. 123"에서 "123"을 체크한다. "2. "인 경우 True
+
+    // inner.item이 있고, Line이 공백인 경우 (inner.item은 XList만 가지고 있다)
+    // "1. "을 입력하고 엔터치는 경우임
     if (inner.item && emptyLine) {
       const first = inner.node.firstChild!,
         second = inner.node.getChild("ListItem", "ListItem");
@@ -396,18 +477,14 @@ export const insertNewlineContinueMarkup: StateCommand = ({
       }
     }
 
-    if (
-      (inner.node.name == "Blockquote" || inner.node.name == "Alert") &&
-      emptyLine &&
-      line.from
-    ) {
-      const prevLine = doc.lineAt(line.from - 1),
-        quoted = />\s*$/.exec(prevLine.text);
-      // Two aligned empty quoted lines in a row
+    // Blockquote, Alert에서 빈 줄일 때 엔터치면 개행 문자를 삽입한다.
+    // 삽입하지 않으면 줄바뀜을 인식하지 못하는 문제가 있기 때문이다.
+    if (["Blockquote", "Alert"].includes(inner.node.name) && emptyLine) {
+      const quoted = />\s*$/.exec(line.text);
+
       if (quoted && quoted.index == inner.from) {
         const changes = state.changes([
-          { from: prevLine.from + quoted.index, to: prevLine.to },
-          { from: line.from + inner.from, to: line.to },
+          { from: line.from + quoted.index, to: line.to, insert: "\n" },
         ]);
         return { range: range.map(changes), changes };
       }
